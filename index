@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <title>Zima Blue - Seramik Havuz</title>
+  <style>
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: #e3f2fd;
+      font-family: 'Courier New', monospace;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <!-- p5.js kütüphanesi -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+  <script>
+    const tileSize = 12;
+    const numTiles = 3;
+    const colors = [
+      "#FFFFFF", "#000000", "#D8EFFF", "#A5CCE6", "#6BAFD9",
+      "#2F80ED", "#003f5c", "#7f8c8d", "#bdc3c7", "#3498db"
+    ];
+
+    let referencePattern = [];
+    let bubbles = [];
+    let tileSpacing = 1;
+    let clickCount = 0;
+
+    function setup() {
+      createCanvas(480, 480);
+      noStroke();
+      initPattern();
+      initBubbles();
+    }
+
+    function initPattern() {
+      referencePattern = [];
+      for (let i = 0; i < tileSize; i++) {
+        referencePattern[i] = [];
+        for (let j = 0; j < tileSize; j++) {
+          referencePattern[i][j] = "#FFFFFF";
+        }
+      }
+    }
+
+    function initBubbles() {
+      for (let i = 0; i < 40; i++) {
+        bubbles.push({
+          x: random(width),
+          y: random(height),
+          r: random(5, 20),
+          speed: random(0.3, 1.2),
+          opacity: random(50, 100)
+        });
+      }
+    }
+
+    function draw() {
+      background("#f3f7fa");
+
+      let cellW = width / (tileSize * numTiles);
+      let cellH = height / (tileSize * numTiles);
+
+      // Kareleri çiz
+      for (let ti = 0; ti < numTiles; ti++) {
+        for (let tj = 0; tj < numTiles; tj++) {
+          for (let i = 0; i < tileSize; i++) {
+            for (let j = 0; j < tileSize; j++) {
+              let x = (ti * tileSize + i) * cellW;
+              let y = (tj * tileSize + j) * cellH;
+
+              fill(referencePattern[i][j]);
+              rect(
+                x + tileSpacing / 2,
+                y + tileSpacing / 2,
+                cellW - tileSpacing,
+                cellH - tileSpacing
+              );
+            }
+          }
+        }
+      }
+
+      // Kalın çizgiler (3x3 blokları ayıran)
+      stroke(255);
+      strokeWeight(2);
+      for (let k = 1; k < numTiles; k++) {
+        let x = (tileSize * k) * (width / (tileSize * numTiles));
+        line(x, 0, x, height);
+        let y = (tileSize * k) * (height / (tileSize * numTiles));
+        line(0, y, width, y);
+      }
+      noStroke();
+
+      // Su efekti (parıltı)
+      for (let y = 0; y < height; y += 5) {
+        let alpha = 10 + 20 * sin((frameCount * 0.01) + y * 0.05);
+        fill(255, 255, 255, alpha);
+        rect(0, y, width, 5);
+      }
+
+      // Baloncuklar
+      for (let b of bubbles) {
+        fill(255, b.opacity);
+        ellipse(b.x, b.y, b.r);
+        b.y -= b.speed;
+        if (b.y < -b.r) {
+          b.y = height + b.r;
+          b.x = random(width);
+        }
+      }
+
+      // Sayılar (istatistik)
+      let whiteCount = countWhiteTiles();
+      let totalTiles = tileSize * tileSize;
+      let percent = int((whiteCount / totalTiles) * 100);
+
+      fill(0, 80);
+      rect(10, height - 60, 170, 50, 8);
+
+      fill(255);
+      textSize(12);
+      textAlign(LEFT, TOP);
+      text(`🖱️ Tıklama: ${clickCount}`, 20, height - 55);
+      text(`⬜ Beyaz Karolar: ${whiteCount} / ${totalTiles}`, 20, height - 40);
+      text(`✅ %${percent} tamamlandı`, 20, height - 25);
+    }
+
+    function countWhiteTiles() {
+      let count = 0;
+      for (let i = 0; i < tileSize; i++) {
+        for (let j = 0; j < tileSize; j++) {
+          if (referencePattern[i][j] === "#FFFFFF") {
+            count++;
+          }
+        }
+      }
+      return count;
+    }
+
+    function mousePressed() {
+      clickCount++;
+      let newPattern = [];
+      for (let i = 0; i < tileSize; i++) {
+        newPattern[i] = [];
+        for (let j = 0; j < tileSize; j++) {
+          newPattern[i][j] = random(colors);
+        }
+      }
+      referencePattern = newPattern;
+    }
+  </script>
+</body>
+</html>
